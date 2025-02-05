@@ -120,6 +120,7 @@ const chatData = [
 const Calling = ({ onEnd, agentId }) => {
   const { callState, initiateCall, endCall, device, setDevice } = useWidget();
   const [isTwilioLoaded, setIsTwilioLoaded] = useState(false);
+  const { toast } = useToast();
 
   // Function to get Twilio token from backend
   async function getToken() {
@@ -134,6 +135,11 @@ const Calling = ({ onEnd, agentId }) => {
       return data.token;
     } catch (error) {
       console.error("Error fetching token:", error);
+      toast({
+        title: "Error",
+        description: "Failed to get Twilio token",
+        variant: "destructive",
+      });
     }
   }
 
@@ -146,20 +152,34 @@ const Calling = ({ onEnd, agentId }) => {
         const token = await getToken();
         if (!token || !mounted) return;
 
-        const twilioDevice = new window.Twilio.Device(token, { debug: true });
+        const twilioDevice = new window.Twilio.Device(token, {
+          debug: true,
+        });
 
         twilioDevice.on("ready", () => {
-          console.log("Twilio.Device is ready.");
+          console.log("Twilio.Device is ready");
           setDevice(twilioDevice);
         });
 
-        // Add other event listeners as needed
+        twilioDevice.on("error", (error) => {
+          console.error("Twilio device error:", error);
+          toast({
+            title: "Call Error",
+            description: error.message,
+            variant: "destructive",
+          });
+        });
       } catch (error) {
         console.error("Failed to initialize Twilio device:", error);
+        toast({
+          title: "Setup Error",
+          description: "Failed to initialize Twilio device",
+          variant: "destructive",
+        });
       }
     }
 
-    if (isTwilioLoaded) {
+    if (isTwilioLoaded && !device) {
       setupDevice();
     }
 
@@ -169,11 +189,21 @@ const Calling = ({ onEnd, agentId }) => {
         device.destroy();
       }
     };
-  }, [isTwilioLoaded]);
+  }, [isTwilioLoaded, device, setDevice]);
 
-  function handleTwilioScriptLoad() {
-    setIsTwilioLoaded(true);
-  }
+  // Add script load handler
+  useEffect(() => {
+    const script = document.createElement("script");
+    script.src =
+      "https://media.twiliocdn.com/sdk/js/client/v1.13/twilio.min.js";
+    script.async = true;
+    script.onload = () => setIsTwilioLoaded(true);
+    document.body.appendChild(script);
+
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []);
 
   return (
     <>
@@ -276,13 +306,17 @@ const CallEnded = ({ onBack }) => {
 
 const Call = ({ onBack }) => {
   const [callState, setCallState] = useState("calling");
-
   const [device, setDevice] = useState(null);
   const [isTwilioLoaded, setIsTwilioLoaded] = useState(false);
   const { toast } = useToast();
-
-  // Add debug state
   const [scriptLoadState, setScriptLoadState] = useState("pending");
+
+  // Add the missing function
+  function handleTwilioScriptLoad() {
+    console.log("Twilio script loaded successfully");
+    setIsTwilioLoaded(true);
+    setScriptLoadState("loaded");
+  }
 
   // Function to get Twilio token from backend
   async function getToken() {
