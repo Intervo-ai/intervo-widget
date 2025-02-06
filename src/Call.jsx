@@ -88,6 +88,8 @@ const Call = ({ onBack, agentId }) => {
     async function setupDevice() {
       try {
         const token = await getToken();
+
+        console.log("tokenizor", token, mounted);
         if (!token || !mounted) return;
 
         const twilioDevice = new window.Twilio.Device(token, {
@@ -132,9 +134,10 @@ const Call = ({ onBack, agentId }) => {
 
     return () => {
       mounted = false;
-      if (device) {
-        device.destroy();
-      }
+      // if (device) {
+      //   console.log("device destroyed");
+      //   device.destroy();
+      // }
     };
   }, [isTwilioLoaded, device, endCall, onBack, toast]);
 

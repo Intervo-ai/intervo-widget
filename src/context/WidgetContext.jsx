@@ -12,7 +12,6 @@ import { transformAgentData } from "@/lib/utils";
 const backendAPIUrl = returnAPIUrl();
 
 const initialState = {
-  widgetId: "7706efd1-f279-4439-ad5d-3b645d0aba1e",
   contact: {
     fullName: "",
     email: "",
@@ -120,8 +119,12 @@ function widgetReducer(state, action) {
 
 const WidgetContext = createContext();
 
-export function WidgetProvider({ children }) {
-  const [state, dispatch] = useReducer(widgetReducer, initialState);
+export function WidgetProvider({ children, widgetId }) {
+  console.log(widgetId, "widgetId");
+  const [state, dispatch] = useReducer(widgetReducer, {
+    ...initialState,
+    widgetId: widgetId,
+  });
   const socketRef = useRef(null);
 
   const setIsOpen = (isOpen) => {
@@ -472,12 +475,20 @@ const hash = crypto.createHmac('sha256', secret).update(userId).digest('hex');`,
       await setupWebSocket(wsToken, agentId);
 
       console.log(state.device, "devic status");
-      // 4. Start the call using Twilio device
+      // 4. Start the call using Twilio device with audio constraints
       if (!state.device) throw new Error("Twilio device not ready");
 
       const connection = state.device.connect({
         To: "client",
         aiConfig: JSON.stringify(updatedAiConfig),
+        // Add audio constraints to prevent echo
+        rtcConstraints: {
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true,
+          },
+        },
       });
 
       if (!connection) {

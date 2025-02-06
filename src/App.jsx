@@ -6,9 +6,9 @@ import Start from "./Start";
 import Message from "./Message";
 import Call from "./Call";
 import DataCollection from "./DataCollection";
-import { useWidget } from "@/context/WidgetContext";
+import { useWidget, WidgetProvider } from "@/context/WidgetContext";
 
-const Page = () => {
+const Page = ({ widgetId }) => {
   const { isOpen, setIsOpen, activeComponent, setActiveComponent, contact } =
     useWidget();
 
@@ -20,14 +20,14 @@ const Page = () => {
   }, []);
   const renderComponent = useCallback(() => {
     console.log("rerendering renderComponent", activeComponent);
-    // if (activeComponent !== "main" && !contact.collected) {
-    //   return (
-    //     <DataCollection
-    //       initialData={contact}
-    //       activeComponent={activeComponent}
-    //     />
-    //   );
-    // }
+    if (activeComponent !== "main" && !contact.collected) {
+      return (
+        <DataCollection
+          initialData={contact}
+          activeComponent={activeComponent}
+        />
+      );
+    }
 
     switch (activeComponent) {
       case "message":
@@ -65,4 +65,12 @@ const Page = () => {
   );
 };
 
-export default Page;
+const App = ({ widgetId }) => {
+  return (
+    <WidgetProvider widgetId={widgetId}>
+      <Page />
+    </WidgetProvider>
+  );
+};
+
+export default App;

@@ -45,8 +45,8 @@ class ErrorBoundary extends React.Component {
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <ErrorBoundary>
-      <WidgetProvider>
-        <App />
+      <WidgetProvider widgetId="7706efd1-f279-4439-ad5d-3b645d0aba1e">
+        <App widgetId="7706efd1-f279-4439-ad5d-3b645d0aba1e" />
         <ToastContainer position="top-right" autoClose={5000} />
       </WidgetProvider>
     </ErrorBoundary>
