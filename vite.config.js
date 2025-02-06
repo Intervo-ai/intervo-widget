@@ -2,7 +2,6 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
 
-// Add this plugin to inject CSS
 function injectCss() {
   let cssContent = "";
 
@@ -11,56 +10,114 @@ function injectCss() {
     transform(code, id) {
       if (id.endsWith(".css")) {
         cssContent += code;
-        // Return an empty module so that the CSS isn't output separately.
+        // Return an empty module so that this CSS isn't output separately.
         return "";
       }
     },
     generateBundle(options, bundle) {
+      // Loop over JS bundle files and inject our code.
       for (const fileName in bundle) {
         if (fileName.endsWith(".js")) {
-          // Use JSON.stringify to produce a valid JS string literal including any quotes (like in "Apple Color Emoji")
-          const safeCSS = JSON.stringify(cssContent);
+          // Combine your Tailwind variables (adjust as needed) with the accumulated CSS.
+          const tailwindVars = `
+:host {
+  --background: 0 0% 100%;
+  --foreground: 240 10% 3.9%;
+  --card: 0 0% 100%;
+  --card-foreground: 240 10% 3.9%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 240 10% 3.9%;
+  --primary: 240 5.9% 10%;
+  --primary-foreground: 0 0% 98%;
+  --secondary: 240 4.8% 95.9%;
+  --secondary-foreground: 240 5.9% 10%;
+  --muted: 240 4.8% 95.9%;
+  --muted-foreground: 240 3.8% 46.1%;
+  --accent: 240 4.8% 95.9%;
+  --accent-foreground: 240 5.9% 10%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 240 5.9% 90%;
+  --input: 240 5.9% 90%;
+  --ring: 240 10% 3.9%;
+  --chart-1: 12 76% 61%;
+  --chart-2: 173 58% 39%;
+  --chart-3: 197 37% 24%;
+  --chart-4: 43 74% 66%;
+  --chart-5: 27 87% 67%;
+  --radius: 0.5rem;
+}
+`;
+          const combinedCSS = tailwindVars + cssContent;
+          const safeCSS = JSON.stringify(combinedCSS);
 
-          // Build injection code via string concatenation.
-          const injection =
-            "(function(){\n" +
-            "  if (typeof window.WidgetLibrary === 'undefined') {\n" +
-            "    console.error('WidgetLibrary is not defined.');\n" +
-            "    return;\n" +
-            "  }\n" +
-            "  const originalInit = window.WidgetLibrary.init;\n" +
-            "  window.WidgetLibrary.init = function(widgetId, containerId) {\n" +
-            "    const container = document.getElementById(containerId);\n" +
-            "    if (!container) {\n" +
-            "      console.error('Container not found');\n" +
-            "      return;\n" +
-            "    }\n" +
-            "    var shadow;\n" +
-            "    if (container.__shadowAttached) {\n" +
-            "      shadow = container.__shadowRoot;\n" +
-            "    } else {\n" +
-            "      try {\n" +
-            "        shadow = container.attachShadow({ mode: 'open' });\n" +
-            "        container.__shadowAttached = true;\n" +
-            "        container.__shadowRoot = shadow;\n" +
-            "      } catch(e) {\n" +
-            "        console.error('Failed to attach shadow:', e);\n" +
-            "        return;\n" +
-            "      }\n" +
-            "    }\n" +
-            "    const styleEl = document.createElement('style');\n" +
-            "    styleEl.textContent = " +
-            safeCSS +
-            ";\n" +
-            "    if (!shadow.querySelector('style[data-injected]')) {\n" +
-            "      styleEl.setAttribute('data-injected', 'true');\n" +
-            "      shadow.appendChild(styleEl);\n" +
-            "    }\n" +
-            "    return originalInit.call(this, widgetId, containerId);\n" +
-            "  };\n" +
-            "})();\n";
+          // This injection snippet patches WidgetLibrary.init so that when the widget mounts:
+          // • It attaches a shadow root (if not already attached)
+          // • It injects the combined CSS into that shadow DOM
+          // • It sets up a MutationObserver on document.body that watches for any node with
+          //   data-radix-popper-content-wrapper and re-parents it into the widget's shadow root.
+          const injection = `
+(function(){
+  if (typeof window.WidgetLibrary === 'undefined') {
+    console.error('WidgetLibrary is not defined.');
+    return;
+  }
+  const originalInit = window.WidgetLibrary.init;
+  window.WidgetLibrary.init = function(widgetId, containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) {
+      console.error('Container not found');
+      return;
+    }
+    var shadow;
+    if (container.__shadowAttached) {
+      shadow = container.__shadowRoot;
+    } else {
+      try {
+        shadow = container.attachShadow({ mode: 'open' });
+        container.__shadowAttached = true;
+        container.__shadowRoot = shadow;
+      } catch(e) {
+        console.error('Failed to attach shadow:', e);
+        return;
+      }
+    }
+    if (!shadow.querySelector('style[data-injected]')) {
+      const styleEl = document.createElement('style');
+      styleEl.setAttribute('data-injected', 'true');
+      styleEl.textContent = ${safeCSS};
+      shadow.appendChild(styleEl);
+    }
+    // Set up a MutationObserver to catch any Radix popper content (the dropdown)
+    // that would normally be appended to document.body. When detected, remove it
+    // and re-parent it into the shadow DOM so that styles are applied properly.
+    const observer = new MutationObserver(mutations => {
+      mutations.forEach(mutation => {
+        mutation.addedNodes.forEach(node => {
+          if (
+            node.nodeType === Node.ELEMENT_NODE &&
+            node.hasAttribute &&
+            node.hasAttribute('data-radix-popper-content-wrapper')
+          ) {
+            try {
+              if (node.parentNode) {
+                node.parentNode.removeChild(node);
+              }
+              // Append the popper content into the same shadow DOM.
+              shadow.appendChild(node);
+            } catch(e) {
+              console.error('Error moving popper node:', e);
+            }
+          }
+        });
+      });
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+    return originalInit.call(this, widgetId, containerId);
+  };
+})();
+`;
 
-          // Append the injection snippet to the end of the bundle.
           bundle[fileName].code = bundle[fileName].code + injection;
         }
       }
@@ -68,7 +125,6 @@ function injectCss() {
   };
 }
 
-// https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), injectCss()],
   resolve: {
@@ -91,7 +147,6 @@ export default defineConfig({
           react: "React",
           "react-dom": "ReactDOM",
         },
-        assetFileNames: () => "widget-library.[ext]",
       },
     },
   },

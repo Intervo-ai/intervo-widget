@@ -5,6 +5,7 @@ import { WidgetProvider } from "./context/WidgetContext";
 import "./index.css";
 
 export const init = (widgetId, containerId) => {
+  console.log(widgetId, "******widgetId******");
   const container = document.getElementById(containerId);
   if (!container) {
     console.error(`Container with id "${containerId}" not found`);
@@ -27,13 +28,12 @@ export const init = (widgetId, containerId) => {
 
     // Create a mounting point for React
     const mountPoint = document.createElement("div");
-    mountPoint.style.cssText = "all: initial;"; // Reset all inherited styles
     widgetRoot.appendChild(mountPoint);
 
     ReactDOM.createRoot(mountPoint).render(
       <React.StrictMode>
         <WidgetProvider widgetId={widgetId}>
-          <App />
+          <App widgetId={widgetId} />
         </WidgetProvider>
       </React.StrictMode>
     );

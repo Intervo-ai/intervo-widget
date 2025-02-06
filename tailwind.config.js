@@ -2,6 +2,7 @@
 export default {
   darkMode: ["class"],
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
+  safelist: ["[&_svg]:size-full"],
   theme: {
     extend: {
       borderRadius: {
