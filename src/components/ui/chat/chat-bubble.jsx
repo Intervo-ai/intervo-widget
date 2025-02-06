@@ -1,4 +1,5 @@
 import * as React from "react";
+import { forwardRef } from "react";
 import { cva } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -25,28 +26,28 @@ const chatBubbleVariant = cva(
   }
 );
 
-const ChatBubble = (
-  { className, variant, layout, children, ...props },
-  ref
-) => (
-  <div
-    className={cn(
-      chatBubbleVariant({ variant, layout, className }),
-      "relative group"
-    )}
-    ref={ref}
-    {...props}
-  >
-    {React.Children.map(children, (child) =>
-      React.isValidElement(child) && typeof child.type !== "string"
-        ? React.cloneElement(child, {
-            variant,
-            layout,
-          })
-        : child
-    )}
-  </div>
+const ChatBubble = forwardRef(
+  ({ className, variant, layout, children, ...props }, ref) => (
+    <div
+      className={cn(
+        chatBubbleVariant({ variant, layout, className }),
+        "relative group"
+      )}
+      ref={ref}
+      {...props}
+    >
+      {React.Children.map(children, (child) =>
+        React.isValidElement(child) && typeof child.type !== "string"
+          ? React.cloneElement(child, {
+              variant,
+              layout,
+            })
+          : child
+      )}
+    </div>
+  )
 );
+
 ChatBubble.displayName = "ChatBubble";
 
 // ChatBubbleAvatar
@@ -62,8 +63,7 @@ const ChatBubbleAvatar = ({ src, fallback, className }) => (
 const chatBubbleMessageVariants = cva("p-4", {
   variants: {
     variant: {
-      received:
-        "bg-white text-secondary-foreground rounded-r-lg rounded-tl-lg",
+      received: "bg-white text-secondary-foreground rounded-r-lg rounded-tl-lg",
       sent: "bg-neutral-800 text-primary-foreground rounded-l-lg rounded-tr-lg",
     },
     layout: {
@@ -77,26 +77,28 @@ const chatBubbleMessageVariants = cva("p-4", {
   },
 });
 
-const ChatBubbleMessage = (
-  { className, variant, layout, isLoading = false, children, ...props },
-  ref
-) => (
-  <div
-    className={cn(
-      chatBubbleMessageVariants({ variant, layout, className }),
-      "break-words max-w-full whitespace-pre-wrap"
-    )}
-    ref={ref}
-    {...props}
-  >
-    {isLoading ? (
-      <div className="flex items-center space-x-2">
-        <MessageLoading />
-      </div>
-    ) : (
-      children
-    )}
-  </div>
+const ChatBubbleMessage = forwardRef(
+  (
+    { className, variant, layout, isLoading = false, children, ...props },
+    ref
+  ) => (
+    <div
+      className={cn(
+        chatBubbleMessageVariants({ variant, layout, className }),
+        "break-words max-w-full whitespace-pre-wrap"
+      )}
+      ref={ref}
+      {...props}
+    >
+      {isLoading ? (
+        <div className="flex items-center space-x-2">
+          <MessageLoading />
+        </div>
+      ) : (
+        children
+      )}
+    </div>
+  )
 );
 
 ChatBubbleMessage.displayName = "ChatBubbleMessage";
@@ -129,23 +131,22 @@ const ChatBubbleAction = ({
   </Button>
 );
 
-const ChatBubbleActionWrapper = (
-  { variant, className, children, ...props },
-  ref
-) => (
-  <div
-    ref={ref}
-    className={cn(
-      "absolute top-1/2 -translate-y-1/2 flex opacity-0 group-hover:opacity-100 transition-opacity duration-200",
-      variant === "sent"
-        ? "-left-1 -translate-x-full flex-row-reverse"
-        : "-right-1 translate-x-full",
-      className
-    )}
-    {...props}
-  >
-    {children}
-  </div>
+const ChatBubbleActionWrapper = forwardRef(
+  ({ variant, className, children, ...props }, ref) => (
+    <div
+      ref={ref}
+      className={cn(
+        "absolute top-1/2 -translate-y-1/2 flex opacity-0 group-hover:opacity-100 transition-opacity duration-200",
+        variant === "sent"
+          ? "-left-1 -translate-x-full flex-row-reverse"
+          : "-right-1 translate-x-full",
+        className
+      )}
+      {...props}
+    >
+      {children}
+    </div>
+  )
 );
 
 ChatBubbleActionWrapper.displayName = "ChatBubbleActionWrapper";

@@ -20,14 +20,14 @@ const Page = () => {
   }, []);
   const renderComponent = useCallback(() => {
     console.log("rerendering renderComponent", activeComponent);
-    if (activeComponent !== "main" && !contact.collected) {
-      return (
-        <DataCollection
-          initialData={contact}
-          activeComponent={activeComponent}
-        />
-      );
-    }
+    // if (activeComponent !== "main" && !contact.collected) {
+    //   return (
+    //     <DataCollection
+    //       initialData={contact}
+    //       activeComponent={activeComponent}
+    //     />
+    //   );
+    // }
 
     switch (activeComponent) {
       case "message":

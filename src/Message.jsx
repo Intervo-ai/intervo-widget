@@ -69,13 +69,14 @@ const Message = ({ onBack, agentId }) => {
         <ChatMessageList className="overflow-y-scroll">
           {messages.map((message, index) => (
             <ChatBubble
-              key={index}
+              key={`message-${index}`}
               variant={message.source === "assistant" ? "received" : "sent"}
             >
               {message.source === "assistant" && (
                 <img src={AvatarIcon} alt="ai image" className="rounded-full" />
               )}
               <ChatBubbleMessage
+                as="div"
                 className={`text-sm font-geist leading-5 ${
                   message.source === "assistant" ? "bg-gray-100" : "bg-gray-800"
                 }`}

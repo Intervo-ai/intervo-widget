@@ -3,8 +3,6 @@ import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import returnAPIUrl from "@/config/config";
 import { useWidget } from "@/context/WidgetContext";
-
-const backendAPIUrl = returnAPIUrl();
 import {
   Phone,
   Captions,
@@ -14,113 +12,13 @@ import {
   Mail,
 } from "lucide-react";
 
-const chatData = [
-  {
-    time: "0:01",
-    sender: "Angela Campbell",
-    message: "Hello, this is agent_name speaking.",
-  },
-  {
-    time: "0:05",
-    sender: "You",
-    message: "Hi Angela, this is Ruth. How are you doing today?",
-  },
-  {
-    time: "0:10",
-    sender: "Angela Campbell",
-    message: "Hi Ruth, I'm doing well. How can I assist you today?",
-  },
-  {
-    time: "0:15",
-    sender: "You",
-    message: "I need help with updating my account information.",
-  },
-  {
-    time: "0:01",
-    sender: "Angela Campbell",
-    message: "Hello, this is agent_name speaking.",
-  },
-  {
-    time: "0:05",
-    sender: "You",
-    message: "Hi Angela, this is Ruth. How are you doing today?",
-  },
-  {
-    time: "0:10",
-    sender: "Angela Campbell",
-    message: "Hi Ruth, I'm doing well. How can I assist you today?",
-  },
-  {
-    time: "0:15",
-    sender: "You",
-    message: "I need help with updating my account information.",
-  },
-  {
-    time: "0:01",
-    sender: "Angela Campbell",
-    message: "Hello, this is agent_name speaking.",
-  },
-  {
-    time: "0:05",
-    sender: "You",
-    message: "Hi Angela, this is Ruth. How are you doing today?",
-  },
-  {
-    time: "0:10",
-    sender: "Angela Campbell",
-    message: "Hi Ruth, I'm doing well. How can I assist you today?",
-  },
-  {
-    time: "0:15",
-    sender: "You",
-    message: "I need help with updating my account information.",
-  },
-  {
-    time: "0:01",
-    sender: "Angela Campbell",
-    message: "Hello, this is agent_name speaking.",
-  },
-  {
-    time: "0:05",
-    sender: "You",
-    message: "Hi Angela, this is Ruth. How are you doing today?",
-  },
-  {
-    time: "0:10",
-    sender: "Angela Campbell",
-    message: "Hi Ruth, I'm doing well. How can I assist you today?",
-  },
-  {
-    time: "0:15",
-    sender: "You",
-    message: "I need help with updating my account information.",
-  },
-  {
-    time: "0:01",
-    sender: "Angela Campbell",
-    message: "Hello, this is agent_name speaking.",
-  },
-  {
-    time: "0:05",
-    sender: "You",
-    message: "Hi Angela, this is Ruth. How are you doing today?",
-  },
-  {
-    time: "0:10",
-    sender: "Angela Campbell",
-    message: "Hi Ruth, I'm doing well. How can I assist you today?",
-  },
-  {
-    time: "0:15",
-    sender: "You",
-    message: "I need help with updating my account information.",
-  },
-];
+const backendAPIUrl = returnAPIUrl();
 
-const Calling = ({ onEnd, agentId }) => {
-  const { callState, initiateCall, endCall, device, setDevice } = useWidget();
+const Call = ({ onBack, agentId }) => {
   const [isTwilioLoaded, setIsTwilioLoaded] = useState(false);
   const { toast } = useToast();
+  const [scriptLoadState, setScriptLoadState] = useState("pending");
+  const { callState, initiateCall, endCall, setDevice, device } = useWidget();
 
   // Function to get Twilio token from backend
   async function getToken() {
@@ -143,7 +41,47 @@ const Calling = ({ onEnd, agentId }) => {
     }
   }
 
-  // Setup Twilio device when script is loaded
+  function handleTwilioScriptLoad() {
+    console.log("Twilio script loaded successfully");
+    setIsTwilioLoaded(true);
+    setScriptLoadState("loaded");
+  }
+
+  function handleTwilioScriptError() {
+    console.error("Failed to load Twilio script");
+    setScriptLoadState("failed");
+  }
+
+  // Script loading effect
+  useEffect(() => {
+    const script = document.createElement("script");
+    script.src =
+      "https://media.twiliocdn.com/sdk/js/client/v1.13/twilio.min.js";
+    script.async = true;
+    script.onload = handleTwilioScriptLoad;
+    script.onerror = handleTwilioScriptError;
+    document.body.appendChild(script);
+
+    console.log("script added");
+    return () => {
+      console.log("script removed");
+      // document.body.removeChild(script);
+    };
+  }, []);
+
+  // Monitor script load state
+  useEffect(() => {
+    console.log("Script load state:", scriptLoadState);
+    if (scriptLoadState === "failed") {
+      toast({
+        title: "Error",
+        description: "Failed to load Twilio SDK",
+        variant: "destructive",
+      });
+    }
+  }, [scriptLoadState, toast]);
+
+  // Device setup effect
   useEffect(() => {
     let mounted = true;
 
@@ -157,17 +95,26 @@ const Calling = ({ onEnd, agentId }) => {
         });
 
         twilioDevice.on("ready", () => {
-          console.log("Twilio.Device is ready");
-          setDevice(twilioDevice);
+          console.log("Twilio.Device is ready", mounted);
+          if (mounted) {
+            setDevice(twilioDevice);
+          }
         });
 
         twilioDevice.on("error", (error) => {
-          console.error("Twilio device error:", error);
+          console.error("Twilio Device Error:", error);
           toast({
             title: "Call Error",
             description: error.message,
             variant: "destructive",
           });
+        });
+
+        twilioDevice.on("disconnect", () => {
+          if (mounted) {
+            endCall();
+            onBack();
+          }
         });
       } catch (error) {
         console.error("Failed to initialize Twilio device:", error);
@@ -189,70 +136,154 @@ const Calling = ({ onEnd, agentId }) => {
         device.destroy();
       }
     };
-  }, [isTwilioLoaded, device, setDevice]);
+  }, [isTwilioLoaded, device, endCall, onBack, toast]);
 
-  // Add script load handler
-  useEffect(() => {
-    const script = document.createElement("script");
-    script.src =
-      "https://media.twiliocdn.com/sdk/js/client/v1.13/twilio.min.js";
-    script.async = true;
-    script.onload = () => setIsTwilioLoaded(true);
-    document.body.appendChild(script);
+  // Handle call initiation
+  async function handleCall() {
+    if (!device || !device.status === "ready") {
+      toast({
+        title: "Error",
+        description: "Please wait for Twilio to initialize",
+        variant: "destructive",
+      });
+      return;
+    }
 
-    return () => {
-      document.body.removeChild(script);
-    };
-  }, []);
+    try {
+      const response = await fetch(`${backendAPIUrl}/stream/prepare`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          aiConfig: JSON.stringify({
+            agentId,
+            playground: false,
+          }),
+        }),
+      });
 
-  return (
-    <>
-      <div className="bg-black pt-[30px] px-8 pb-[22px] h-full max-h-[134px] rounded-t-[18px] flex flex-col justify-between gap-3">
-        <div className="flex justify-between items-center">
-          <h2 className="text-[34px] font-inter font-semibold leading-[40.8px] text-[#F8F8F8]/[.7]">
-            {callState === "ringing"
-              ? "Ringing..."
-              : callState === "connected"
-              ? "In Call"
-              : "Ready to Call"}
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.message || `Server error: ${response.status}`
+        );
+      }
+
+      const prepareData = await response.json();
+
+      if (!prepareData || !prepareData.conversationId) {
+        throw new Error("Invalid response from prepare endpoint");
+      }
+
+      const callParams = {
+        To: "client",
+        aiConfig: JSON.stringify({
+          agentId,
+          conversationId: prepareData.conversationId,
+          playground: false,
+        }),
+      };
+
+      await initiateCall(agentId);
+
+      try {
+        const connection = await device.connect(callParams);
+
+        if (!connection) {
+          throw new Error("Failed to establish connection");
+        }
+
+        connection.on("error", (error) => {
+          console.error("Call connection error:", error);
+          toast({
+            title: "Call Error",
+            description: error.message || "Connection error occurred",
+            variant: "destructive",
+          });
+          handleEndCall();
+        });
+
+        connection.on("disconnect", () => {
+          console.log("Call disconnected");
+          handleEndCall();
+        });
+      } catch (twilioError) {
+        console.error("Twilio connection error:", twilioError);
+        throw new Error("Failed to establish call connection");
+      }
+    } catch (error) {
+      console.error("Error starting call:", error);
+      toast({
+        title: "Call Error",
+        description: error.message || "Failed to start call",
+        variant: "destructive",
+      });
+      endCall();
+    }
+  }
+
+  // Use endCall from context
+  function handleEndCall() {
+    try {
+      if (device) {
+        device.disconnectAll();
+      }
+      endCall();
+    } catch (error) {
+      console.error("Error ending call:", error);
+      toast({
+        title: "Error",
+        description: "Failed to end call properly",
+        variant: "destructive",
+      });
+    }
+  }
+
+  const ListItem = ({ text }) => (
+    <li className="text-purple-500">
+      <span className="text-neutral-600">{text}</span>
+    </li>
+  );
+
+  console.log(callState, "call state");
+  const renderActiveCall = () => (
+    <div className="bg-black pt-[30px] px-8 pb-[22px] h-full max-h-[134px] rounded-t-[18px] flex flex-col justify-between gap-3">
+      <div className="flex justify-between items-center">
+        <h2 className="text-[34px] font-inter font-semibold leading-[40.8px] text-[#F8F8F8]/[.7]">
+          {callState === "ringing"
+            ? "Ringing..."
+            : callState === "connected"
+            ? "In Call"
+            : "Ready to Call"}
+        </h2>
+        {callState !== "idle" && (
+          <h2 className="text-2xl leading-8 font-semibold text-[#F1F5F9] font-sans">
+            00:00
           </h2>
-          {callState !== "idle" && (
-            <h2 className="text-2xl leading-8 font-semibold text-[#F1F5F9] font-sans">
-              00:00
-            </h2>
-          )}
-        </div>
-        {callState === "connected" || callState === "ringing" ? (
-          <Button
-            onClick={endCall}
-            className="h-10 bg-red-600 text-white text-sm leading-6 font-medium font-sans hover:bg-red-700"
-          >
-            <Phone /> End Call
-          </Button>
-        ) : (
-          <Button
-            onClick={() => initiateCall(agentId)}
-            disabled={!device}
-            className="h-10 bg-green-600 text-white text-sm leading-6 font-medium font-sans hover:bg-green-700"
-          >
-            <Phone /> Start Call
-          </Button>
         )}
       </div>
-    </>
+      {callState === "connected" || callState === "ringing" ? (
+        <Button
+          onClick={handleEndCall}
+          className="h-10 bg-red-600 text-white text-sm leading-6 font-medium font-sans hover:bg-red-700"
+        >
+          <Phone /> End Call
+        </Button>
+      ) : (
+        <Button
+          onClick={() => initiateCall(agentId)}
+          disabled={!device}
+          className="h-10 bg-green-600 text-white text-sm leading-6 font-medium font-sans hover:bg-green-700"
+        >
+          <Phone /> Start Call
+        </Button>
+      )}
+    </div>
   );
-};
 
-const CallEnded = ({ onBack }) => {
-  const ListItem = ({ text }) => {
-    return (
-      <li className="text-purple-500">
-        <span className="text-neutral-600">{text}</span>
-      </li>
-    );
-  };
-
-  return (
+  const renderCallEnded = () => (
     <>
       <div className="bg-black pt-[20px] px-8 pb-[12px] h-full max-h-[134px] rounded-t-[18px] flex flex-col justify-between gap-3">
         <button
@@ -272,7 +303,6 @@ const CallEnded = ({ onBack }) => {
       </div>
       <div className="px-5 py-6 flex flex-col justify-between h-full">
         <div className="flex h-full flex-col gap-2 px-1.5">
-          {/* Call summary */}
           <h5 className="text-neutral-950 text-[15px] leading-6 font-medium font-sans">
             Call summary:{" "}
             <span className="text-purple-500">Powered by intervo AI</span>
@@ -282,7 +312,7 @@ const CallEnded = ({ onBack }) => {
             <ListItem text="Angela suggests reaching out to the client to clarify data issues." />
             <ListItem text="Angela is busy with meetings scheduled for later in the day but is available on Friday to help Ruth." />
           </ul>
-          {/* Next step */}
+
           <h5 className="text-neutral-950 text-[15px] leading-6 font-medium font-sans">
             Next step:
           </h5>
@@ -291,7 +321,7 @@ const CallEnded = ({ onBack }) => {
             <ListItem text="Angela to check her calendar and confirm availability for the new project on Friday." />
             <ListItem text="Ruth to send an email with details of the new project to Angela." />
           </ul>
-          {/* send email button */}
+
           <Button className="bg-secondary text-primary h-10 text-sm leading-6 font-medium font-sans hover:bg-secondary/80">
             <Mail /> Send transcript to my email
           </Button>
@@ -302,199 +332,16 @@ const CallEnded = ({ onBack }) => {
       </div>
     </>
   );
-};
-
-const Call = ({ onBack }) => {
-  const [callState, setCallState] = useState("calling");
-  const [device, setDevice] = useState(null);
-  const [isTwilioLoaded, setIsTwilioLoaded] = useState(false);
-  const { toast } = useToast();
-  const [scriptLoadState, setScriptLoadState] = useState("pending");
-
-  // Add the missing function
-  function handleTwilioScriptLoad() {
-    console.log("Twilio script loaded successfully");
-    setIsTwilioLoaded(true);
-    setScriptLoadState("loaded");
-  }
-
-  // Function to get Twilio token from backend
-  async function getToken() {
-    try {
-      const response = await fetch(`${backendAPIUrl}/token`);
-      if (!response.ok) {
-        throw new Error("Failed to fetch Twilio token");
-      }
-      const data = await response.json();
-      return data.token;
-    } catch (error) {
-      console.error("Error fetching token:", error);
-    }
-  }
-
-  // Twilio device setup
-  useEffect(() => {
-    let mounted = true;
-
-    async function setupDevice() {
-      try {
-        const token = await getToken();
-        if (!token || !mounted) return;
-
-        const twilioDevice = new window.Twilio.Device(token, { debug: true });
-
-        twilioDevice.on("ready", () => {
-          console.log("Twilio.Device is ready.");
-          setDevice(twilioDevice);
-        });
-
-        // Set up event listeners
-        twilioDevice.on("error", (error) => {
-          console.error("Twilio Device Error:", error);
-          toast({
-            title: "Call Error",
-            description: error.message,
-            variant: "destructive",
-          });
-        });
-
-        twilioDevice.on("disconnect", () => {
-          setCallState("idle");
-          onBack();
-        });
-
-        setDevice(twilioDevice);
-      } catch (error) {
-        console.error("Failed to initialize Twilio device:", error);
-        toast({
-          title: "Initialization Error",
-          description: error.message,
-          variant: "destructive",
-        });
-      }
-    }
-    if (isTwilioLoaded) {
-      setupDevice();
-    }
-
-    return () => {
-      mounted = false;
-      if (device) {
-        device.destroy();
-      }
-    };
-  }, [isTwilioLoaded]);
-
-  // Handle call initiation
-  async function handleCall(agentId) {
-    if (!device) return;
-
-    try {
-      // Prepare the call
-      const response = await fetch(`${backendAPIUrl}/stream/prepare`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          aiConfig: JSON.stringify({ agentId, playground: false }),
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to prepare audio");
-      }
-
-      const prepareData = await response.json();
-      const callParams = {
-        To: "client",
-        aiConfig: JSON.stringify({
-          agentId,
-          conversationId: prepareData.conversationId,
-          playground: false,
-        }),
-      };
-
-      // Start the call
-      const connection = device.connect(callParams);
-      if (!connection) {
-        throw new Error("Failed to make a call. Device not ready.");
-      }
-
-      setCallState("connected");
-    } catch (error) {
-      console.error("Error starting call:", error);
-      toast({
-        title: "Call Error",
-        description: error.message,
-        variant: "destructive",
-      });
-      setCallState("idle");
-    }
-  }
-
-  // Handle call end
-  function handleHangUp() {
-    if (device) {
-      device.disconnectAll();
-      setCallState("idle");
-      onBack();
-    }
-  }
-
-  const handleEndCall = () => setCallState("callended");
-
-  // Replace Script component with useEffect for script loading
-  useEffect(() => {
-    const script = document.createElement("script");
-    script.src =
-      "https://media.twiliocdn.com/sdk/js/client/v1.13/twilio.min.js";
-    script.async = true;
-    script.onload = handleTwilioScriptLoad;
-    script.onerror = handleTwilioScriptError;
-    document.body.appendChild(script);
-
-    return () => {
-      document.body.removeChild(script);
-    };
-  }, []);
-
-  // Add error handler
-  function handleTwilioScriptError() {
-    console.error("Failed to load Twilio script");
-    setScriptLoadState("failed");
-  }
-
-  // Add useEffect to monitor script state
-  useEffect(() => {
-    console.log("Script load state:", scriptLoadState);
-    if (scriptLoadState === "failed") {
-      toast({
-        title: "Error",
-        description: "Failed to load Twilio SDK",
-        variant: "destructive",
-      });
-    }
-  }, [scriptLoadState]);
 
   return (
     <>
-      {/* Add debug info */}
       {scriptLoadState === "failed" && (
         <div className="text-red-500">
           Failed to load Twilio SDK. Please check your network connection.
         </div>
       )}
-
-      {callState === "calling" && (
-        <Calling
-          onEnd={handleEndCall}
-          handleCall={handleCall}
-          // agentId={agentId}
-          device={device}
-        />
-      )}
-      {callState === "callended" && <CallEnded onBack={onBack} />}
+      {callState !== "callended" && renderActiveCall()}
+      {callState === "callended" && renderCallEnded()}
     </>
   );
 };

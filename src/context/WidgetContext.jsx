@@ -130,9 +130,12 @@ export function WidgetProvider({ children }) {
 
   const getWsToken = async () => {
     try {
-      const response = await fetch(`${backendAPIUrl}/auth/ws-token`, {
-        credentials: "include",
-      });
+      const response = await fetch(
+        `${backendAPIUrl}/auth/ws-token?widgetId=${state.widgetId}`,
+        {
+          credentials: "include",
+        }
+      );
       const data = await response.json();
       return data.token;
     } catch (error) {
@@ -468,6 +471,7 @@ const hash = crypto.createHmac('sha256', secret).update(userId).digest('hex');`,
       // 3. Initialize WebSocket
       await setupWebSocket(wsToken, agentId);
 
+      console.log(state.device, "devic status");
       // 4. Start the call using Twilio device
       if (!state.device) throw new Error("Twilio device not ready");
 

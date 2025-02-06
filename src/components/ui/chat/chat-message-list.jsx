@@ -1,10 +1,11 @@
 import * as React from "react";
+import { forwardRef } from "react";
 import { ArrowDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAutoScroll } from "@/components/ui/chat/hooks/useAutoScroll";
 
-const ChatMessageList = (
-  ({ className, children, smooth = false, ...props }, _ref) => {
+const ChatMessageList = forwardRef(
+  ({ className, children, smooth = false, ...props }, ref) => {
     const {
       scrollRef,
       isAtBottom,
@@ -16,11 +17,17 @@ const ChatMessageList = (
       content: children,
     });
 
+    // Combine the forwarded ref with the scroll ref
+    const combinedRef = (element) => {
+      if (typeof ref === "function") ref(element);
+      scrollRef.current = element;
+    };
+
     return (
       <div className="relative w-full h-full">
         <div
           className={`flex flex-col w-full h-full p-4 overflow-y-auto ${className}`}
-          ref={scrollRef}
+          ref={combinedRef}
           onWheel={disableAutoScroll}
           onTouchMove={disableAutoScroll}
           {...props}
@@ -30,9 +37,7 @@ const ChatMessageList = (
 
         {!isAtBottom && (
           <Button
-            onClick={() => {
-              scrollToBottom();
-            }}
+            onClick={scrollToBottom}
             size="icon"
             variant="outline"
             className="absolute bottom-2 left-1/2 transform -translate-x-1/2 inline-flex rounded-full shadow-md"

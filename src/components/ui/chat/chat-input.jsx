@@ -1,8 +1,9 @@
 import * as React from "react";
+import { forwardRef } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 
-const ChatInput = ({ className, ...props }, ref) => (
+export const ChatInput = forwardRef(({ className, ...props }, ref) => (
   <Textarea
     autoComplete="off"
     ref={ref}
@@ -13,8 +14,6 @@ const ChatInput = ({ className, ...props }, ref) => (
     )}
     {...props}
   />
-);
+));
 
 ChatInput.displayName = "ChatInput";
-
-export { ChatInput };
