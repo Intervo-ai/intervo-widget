@@ -3,11 +3,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { useState } from "react";
-import { MessageCircle, Phone } from "lucide-react";
+import { ChevronLeft, ChevronsLeft, MessageCircle, Phone } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useWidget } from "@/context/WidgetContext";
 
-const DataCollection = ({ initialData, activeComponent }) => {
+const DataCollection = ({ initialData, activeComponent, onBack }) => {
   const [formData, setFormData] = useState(initialData);
   const { createContact, isLoading } = useWidget();
 
@@ -32,14 +32,23 @@ const DataCollection = ({ initialData, activeComponent }) => {
 
   return (
     <>
-      <div className="bg-black pt-[30px] px-8 pb-[22px] h-full max-h-[124px] rounded-t-[18px] flex flex-col leading-9 text-3xl font-semibold -tracking-[0.75px]">
-        <p className="text-[#F8F8F8]/[.7] flex gap-2">
-          Hi There
-          <img src={HandIcon} alt="Hand Icon" width={24} height={24} />
-        </p>
-        <p className="text-slate-100">How can we help?</p>
+      <div className="pt-[20px] px-8 pb-[22px] h-full max-h-[140px] rounded-t-[18px] flex flex-col gap-4 leading-8 text-2xl font-semibold -tracking-[0.75px]">
+        <span
+          className="text-base text-slate-950 leading-6 font-medium gap-2 flex hover:cursor-pointer"
+          onClick={onBack}
+        >
+          <ChevronLeft /> Back
+        </span>
+        <div className="flex flex-col">
+          <p className="text-slate-950">
+            {activeComponent === "call"
+              ? "Talk to us now"
+              : "Let’s chat real time"}
+          </p>
+          <p className="text-slate-400">Connect directly now</p>
+        </div>
       </div>
-      <div className="px-5 py-3 flex flex-col justify-between h-full">
+      <div className="px-5 py-3 flex flex-col justify-between h-full bg-white rounded-b-[18px]">
         <form onSubmit={handleSubmit} className="space-y-3">
           <div className="space-y-2">
             <label className="text-sm font-medium leading-5 font-sans">

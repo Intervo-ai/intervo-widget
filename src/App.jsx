@@ -25,6 +25,7 @@ const Page = ({ widgetId }) => {
         <DataCollection
           initialData={contact}
           activeComponent={activeComponent}
+          onBack={() => setActiveComponent("main")}
         />
       );
     }
@@ -45,7 +46,7 @@ const Page = ({ widgetId }) => {
   return (
     <div className="relative">
       {isOpen && (
-        <div className="fixed bottom-24 right-8 w-[432px] h-[643px] bg-white rounded-[18px] shadow-lg flex flex-col">
+        <div className="fixed bottom-24 right-8 w-[432px] h-[643px] bg-slate-100 border border-slate-300 rounded-[18px] shadow-2xl flex flex-col">
           {renderComponent()}
         </div>
       )}

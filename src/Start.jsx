@@ -1,21 +1,17 @@
-import HandIcon from "@/assets/widgetHand.png";
 import { Mail, MessageCircle, Phone } from "lucide-react";
 
 const Main = ({ onCardClick }) => {
   return (
     <>
-      <div className="bg-black pt-[30px] px-8 pb-[22px] h-full max-h-[124px] rounded-t-[18px] flex flex-col leading-9 text-3xl font-semibold -tracking-[0.75px]">
-        <p className="text-[#F8F8F8]/[.7] flex gap-2">
-          Hi There
-          <img src={HandIcon} alt="Hand Icon" width={24} height={24} />
-        </p>
-        <p className="text-slate-100">How can we help?</p>
+      <div className="pt-[30px] px-8 pb-[22px] h-full max-h-[110px] rounded-t-[18px] flex flex-col leading-8 text-2xl font-semibold -tracking-[0.75px]">
+        <p className="text-slate-950 flex gap-2">Hi there</p>
+        <p className="text-slate-400">How can we help?</p>
       </div>
       <div className="px-5 py-3 flex flex-col justify-between h-full">
         <div className="flex flex-col gap-3">
           {/* cards */}
           <div
-            className="bg-white hover:bg-neutral-100 hover:cursor-pointer transition-all duration-300 border border-black/[.14] flex py-[22px] px-6 rounded-[10px] items-center gap-[22px] shadow-md"
+            className="bg-white hover:cursor-pointer transition-all duration-300 border border-black/[.14] hover:border-black/[.24] focus:border-black/[.8] flex py-[22px] px-6 rounded-[10px] items-center gap-[22px] shadow-md hover:shadow-sm"
             onClick={() => onCardClick("call")}
           >
             <Phone className="h-6 w-6" />
@@ -30,7 +26,7 @@ const Main = ({ onCardClick }) => {
           </div>
 
           <div
-            className="bg-white hover:bg-neutral-100 hover:cursor-pointer transition-all duration-300 border border-black/[.14] flex py-[22px] px-6 rounded-[10px] items-center gap-[22px] shadow-md"
+            className="bg-white hover:cursor-pointer transition-all duration-300 border border-black/[.14] hover:border-black/[.24] focus:border-black/[.8] flex py-[22px] px-6 rounded-[10px] items-center gap-[22px] shadow-md hover:shadow-sm"
             onClick={() => onCardClick("message")}
           >
             <MessageCircle className="h-6 w-6" />
@@ -45,7 +41,7 @@ const Main = ({ onCardClick }) => {
           </div>
 
           <div
-            className="bg-white hover:bg-neutral-100 hover:cursor-pointer transition-all duration-300 border border-black/[.14] flex py-[22px] px-6 rounded-[10px] items-center gap-[22px] shadow-md"
+            className="bg-white hover:cursor-pointer transition-all duration-300 border border-black/[.14] hover:border-black/[.24] focus:border-black/[.8] flex py-[22px] px-6 rounded-[10px] items-center gap-[22px] shadow-md hover:shadow-sm"
             onClick={() => onCardClick("email")}
           >
             <Mail className="h-6 w-6" />

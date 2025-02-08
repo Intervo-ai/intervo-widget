@@ -11,6 +11,7 @@ import {
   ChevronLeft,
   Mail,
 } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const backendAPIUrl = returnAPIUrl();
 
@@ -18,7 +19,9 @@ const Call = ({ onBack, agentId }) => {
   const [isTwilioLoaded, setIsTwilioLoaded] = useState(false);
   const { toast } = useToast();
   const [scriptLoadState, setScriptLoadState] = useState("pending");
-  const { callState, initiateCall, endCall, setDevice, device } = useWidget();
+  const [showTranscript, setShowTranscript] = useState(false);
+  const { callState, initiateCall, endCall, setDevice, device, messages } =
+    useWidget();
 
   // Function to get Twilio token from backend
   async function getToken() {
@@ -252,38 +255,88 @@ const Call = ({ onBack, agentId }) => {
 
   console.log(callState, "call state");
   const renderActiveCall = () => (
-    <div className="bg-black pt-[30px] px-8 pb-[22px] h-full max-h-[134px] rounded-t-[18px] flex flex-col justify-between gap-3">
-      <div className="flex justify-between items-center">
-        <h2 className="text-[34px] font-inter font-semibold leading-[40.8px] text-[#F8F8F8]/[.7]">
-          {callState === "ringing"
-            ? "Ringing..."
-            : callState === "connected"
-            ? "In Call"
-            : "Ready to Call"}
-        </h2>
-        {callState !== "idle" && (
-          <h2 className="text-2xl leading-8 font-semibold text-[#F1F5F9] font-sans">
-            00:00
+    <>
+      <div className="bg-black pt-[30px] px-8 pb-[22px] h-full max-h-[134px] rounded-t-[18px] flex flex-col justify-between gap-3">
+        <div className="flex justify-between items-center">
+          <h2 className="text-[34px] font-inter font-semibold leading-[40.8px] text-[#F8F8F8]/[.7]">
+            {callState === "ringing"
+              ? "Ringing..."
+              : callState === "connected"
+              ? "In Call"
+              : "Ready to Call"}
           </h2>
+          {callState !== "idle" && (
+            <h2 className="text-2xl leading-8 font-semibold text-[#F1F5F9] font-sans">
+              00:00
+            </h2>
+          )}
+        </div>
+        {callState === "connected" || callState === "ringing" ? (
+          <Button
+            onClick={handleEndCall}
+            className="h-10 bg-red-600 text-white text-sm leading-6 font-medium font-sans hover:bg-red-700"
+          >
+            <Phone /> End Call
+          </Button>
+        ) : (
+          <Button
+            onClick={() => initiateCall(agentId)}
+            disabled={!device}
+            className="h-10 bg-green-600 text-white text-sm leading-6 font-medium font-sans hover:bg-green-700"
+          >
+            <Phone /> Start Call
+          </Button>
         )}
       </div>
-      {callState === "connected" || callState === "ringing" ? (
-        <Button
-          onClick={handleEndCall}
-          className="h-10 bg-red-600 text-white text-sm leading-6 font-medium font-sans hover:bg-red-700"
+      <div className="px-5 py-3 flex flex-col justify-between h-full">
+        <div className="flex h-full flex-col">
+          <button
+            className="h-[76px] w-full flex justify-between gap-[22px] py-[22px] px-6  bg-white hover:bg-neutral-100 rounded-[10px] items-center shadow-md border border-black/[.14] disabled:cursor-not-allowed"
+            onClick={() => setShowTranscript(!showTranscript)}
+            disabled={callState !== "connected"}
+          >
+            <Captions className="h-8 w-8" />
+            <p className="w-full text-left font-inter font-semibold leading-[22.4px]">
+              Show Transcript
+            </p>
+            {showTranscript ? (
+              <ChevronUp className="h-8 w-8" />
+            ) : (
+              <ChevronDown className="h-8 w-8" />
+            )}
+          </button>
+          {showTranscript && (
+            <ScrollArea className="max-h-[390px]">
+              <div className="space-y-3 mt-2">
+                {messages.map((message, index) => (
+                  <div
+                    key={index}
+                    className="flex items-start pr-2 pl-1.5 gap-2"
+                  >
+                    <p className="text-xs text-neutral-500 leading-6 font-medium font-sans">
+                      {message.time}
+                    </p>
+                    <p className="text-sm text-neutral-500 leading-6">
+                      <span className="font-semibold text-neutral-950">
+                        {message.source}:
+                      </span>{" "}
+                      {message.text}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
+          )}
+        </div>
+        <div
+          className={`text-neutral-500 font-inter text-sm leading-4 pt-1 text-center ${
+            showTranscript && "shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]"
+          }`}
         >
-          <Phone /> End Call
-        </Button>
-      ) : (
-        <Button
-          onClick={() => initiateCall(agentId)}
-          disabled={!device}
-          className="h-10 bg-green-600 text-white text-sm leading-6 font-medium font-sans hover:bg-green-700"
-        >
-          <Phone /> Start Call
-        </Button>
-      )}
-    </div>
+          Powered by intervo
+        </div>
+      </div>
+    </>
   );
 
   const renderCallEnded = () => (
