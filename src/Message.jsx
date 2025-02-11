@@ -65,7 +65,7 @@ const Message = ({ onBack, agentId }) => {
           </div>
         </div>
       </div>
-      <div className="w-full mx-auto max-h-[471px] h-full">
+      <div className="w-full mx-auto max-h-[471px] h-full bg-white">
         <ChatMessageList className="overflow-y-scroll">
           {messages.map((message, index) => (
             <ChatBubble
@@ -93,9 +93,15 @@ const Message = ({ onBack, agentId }) => {
           >
             <ChatInput
               placeholder="Type your message here..."
-              className="min-h-12 resize-none bg-gray-100 text-slate-400 rounded-full p-3 shadow-none focus:ring-0 focus-visible:ring-0 focus:border-0 focus-visible:border-0 border-0 ring-0 flex items-center"
+              className="min-h-12 resize-none bg-gray-100 text-slate-950 rounded-full p-3 shadow-none focus:ring-0 focus-visible:ring-0 focus:border-0 focus-visible:border-0 border-0 ring-0 flex items-center"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSubmit(e);
+                }
+              }}
             />
             <button type="submit" className="ml-auto">
               <Send className="text-slate-400 h-6 w-6" />

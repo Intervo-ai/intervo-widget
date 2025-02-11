@@ -20,8 +20,17 @@ const Call = ({ onBack, agentId }) => {
   const { toast } = useToast();
   const [scriptLoadState, setScriptLoadState] = useState("pending");
   const [showTranscript, setShowTranscript] = useState(false);
-  const { callState, initiateCall, endCall, setDevice, device, messages } =
-    useWidget();
+  const {
+    callState,
+    initiateCall,
+    endCall,
+    setDevice,
+    device,
+    messages,
+    contact,
+  } = useWidget();
+
+  console.log("contact in Call", contact);
 
   // Function to get Twilio token from backend
   async function getToken() {

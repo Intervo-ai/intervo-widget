@@ -9,7 +9,7 @@ export const ChatInput = forwardRef(({ className, ...props }, ref) => (
     ref={ref}
     name="message"
     className={cn(
-      "max-h-12 px-4 py-3 bg-background text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 w-full rounded-md flex items-center h-16 resize-none",
+      "max-h-12 px-4 py-3 bg-gray-100 text-slate-950 !text-slate-950 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-0 disabled:cursor-not-allowed disabled:opacity-50 w-full rounded-full flex items-center h-16 resize-none border-0 focus:ring-0 focus-visible:ring-0 focus:border-0 focus-visible:border-0",
       className
     )}
     {...props}

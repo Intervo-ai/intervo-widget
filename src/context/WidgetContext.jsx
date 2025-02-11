@@ -5,6 +5,7 @@ import React, {
   useReducer,
   useCallback,
   useRef,
+  useEffect,
 } from "react";
 import returnAPIUrl from "@/config/config";
 import { transformAgentData } from "@/lib/utils";
@@ -48,6 +49,7 @@ function widgetReducer(state, action) {
           collected: true,
         },
       };
+
     case "SET_WIDGET_CONFIG":
       return {
         ...state,
@@ -112,6 +114,8 @@ function widgetReducer(state, action) {
       return { ...state, callState: action.payload };
     case "SET_DEVICE":
       return { ...state, device: action.payload };
+    case "GET_CURRENT_STATE":
+      return state;
     default:
       return state;
   }
@@ -126,6 +130,12 @@ export function WidgetProvider({ children, widgetId }) {
     widgetId: widgetId,
   });
   const socketRef = useRef(null);
+  const stateRef = useRef(state);
+
+  // Keep stateRef updated with latest state
+  useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
 
   const setIsOpen = (isOpen) => {
     dispatch({ type: "SET_IS_OPEN", payload: isOpen });
@@ -282,21 +292,23 @@ const hash = crypto.createHmac('sha256', secret).update(userId).digest('hex');`,
       socketRef.current = socket; // Set the ref immediately
 
       socket.onopen = () => {
-        dispatch({ type: "SET_CONNECTED", payload: true });
-
-        // Send start event
+        // Use stateRef.current to access latest state
         const startMessage = {
           event: "start",
           start: {
             customParameters: {
               "agent-id": agentId,
+              contactId: stateRef.current.contact._id,
               mode: type,
-              widgetId: state.widgetId,
+              widgetId: stateRef.current.widgetId,
               ...(aiConfig || {}),
             },
           },
         };
         socket.send(JSON.stringify(startMessage));
+
+        // Then dispatch the connected state
+        dispatch({ type: "SET_CONNECTED", payload: true });
       };
 
       socket.onmessage = (event) => {
@@ -335,7 +347,7 @@ const hash = crypto.createHmac('sha256', secret).update(userId).digest('hex');`,
       console.error("Error setting up WebSocket:", error);
       throw error;
     }
-  }, []); // No dependencies needed now
+  }, []); // Keep empty dependency array
 
   const cleanupWebSocket = () => {
     if (state.socket) {
@@ -365,7 +377,7 @@ const hash = crypto.createHmac('sha256', secret).update(userId).digest('hex');`,
           aiConfig: JSON.stringify({
             agentId,
             widgetId: state.widgetId,
-            playground: false,
+            source: "widget",
           }),
         }),
       });
@@ -375,15 +387,14 @@ const hash = crypto.createHmac('sha256', secret).update(userId).digest('hex');`,
       }
 
       const prepareData = await response.json();
-      const updatedAiConfig = transformAgentData(
-        {
-          ...state.aiConfig,
-          agentId: agentId,
-          playground: false,
-          widgetId: state.widgetId,
-        },
-        prepareData.conversationId
-      );
+      const updatedAiConfig = {
+        ...state.aiConfig,
+        agentId: agentId,
+        source: "widget",
+        widgetId: state.widgetId,
+        contactId: state.contact._id,
+        conversationId: prepareData.conversationId,
+      };
 
       dispatch({ type: "SET_AI_CONFIG", payload: updatedAiConfig });
 
@@ -453,7 +464,7 @@ const hash = crypto.createHmac('sha256', secret).update(userId).digest('hex');`,
           aiConfig: JSON.stringify({
             agentId,
             widgetId: state.widgetId,
-            playground: false,
+            source: "widget",
           }),
         }),
       });
@@ -468,7 +479,8 @@ const hash = crypto.createHmac('sha256', secret).update(userId).digest('hex');`,
         conversationId: prepareData.conversationId,
         agentId: agentId,
         widgetId: state.widgetId,
-        playground: false,
+        contactId: state.contact._id,
+        source: "widget",
       };
 
       // 3. Initialize WebSocket
