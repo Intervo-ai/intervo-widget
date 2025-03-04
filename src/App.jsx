@@ -46,7 +46,7 @@ const Page = ({ widgetId }) => {
   return (
     <div className="relative">
       {isOpen && (
-        <div className="fixed bottom-24 right-8 w-[432px] h-[643px] bg-slate-100 border border-slate-300 rounded-[18px] shadow-2xl flex flex-col">
+        <div className="fixed bottom-0 right-0 w-full h-full md:bottom-24 md:right-8 md:w-[432px] md:h-[643px] bg-slate-100 border border-slate-300 rounded-none md:rounded-[18px] shadow-2xl flex flex-col">
           {renderComponent()}
         </div>
       )}
@@ -54,7 +54,7 @@ const Page = ({ widgetId }) => {
       {/* Toggle Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 right-6 rounded-full shadow-lg transition-all bg-transparent border-none p-0 focus:outline-none focus:ring-0"
+        className="fixed bottom-6 right-6 z-50 rounded-full shadow-lg transition-all bg-transparent border-none p-0 focus:outline-none focus:ring-0"
       >
         {isOpen ? (
           <img src={ActiveIcon} alt="Active Icon" width={50} height={50} />

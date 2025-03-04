@@ -12,6 +12,7 @@ import {
   Mail,
 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import ReactMarkdown from "react-markdown";
 
 const backendAPIUrl = returnAPIUrl();
 
@@ -329,7 +330,7 @@ const Call = ({ onBack, agentId }) => {
                       <span className="font-semibold text-neutral-950">
                         {message.source}:
                       </span>{" "}
-                      {message.text}
+                      <ReactMarkdown>{message.text}</ReactMarkdown>
                     </p>
                   </div>
                 ))}

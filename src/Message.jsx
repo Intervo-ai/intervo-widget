@@ -8,6 +8,7 @@ import { ChatInput } from "@/components/ui/chat/chat-input";
 import AvatarIcon from "@/assets/widgetChatAvatar.png";
 import { useEffect, useState } from "react";
 import { useWidget } from "@/context/WidgetContext";
+import ReactMarkdown from "react-markdown";
 
 const Message = ({ onBack, agentId }) => {
   console.log(agentId, "****agentId");
@@ -81,7 +82,7 @@ const Message = ({ onBack, agentId }) => {
                   message.source === "assistant" ? "bg-gray-100" : "bg-gray-800"
                 }`}
               >
-                {message.text}
+                <ReactMarkdown>{message.text}</ReactMarkdown>
               </ChatBubbleMessage>
             </ChatBubble>
           ))}
