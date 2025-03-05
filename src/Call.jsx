@@ -20,7 +20,8 @@ const Call = ({ onBack, agentId }) => {
   const [isTwilioLoaded, setIsTwilioLoaded] = useState(false);
   const { toast } = useToast();
   const [scriptLoadState, setScriptLoadState] = useState("pending");
-  const [showTranscript, setShowTranscript] = useState(false);
+  const [showTranscript, setShowTranscript] = useState(true);
+  const [isFirstDeviceReady, setIsFirstDeviceReady] = useState(true);
   const {
     callState,
     initiateCall,
@@ -113,6 +114,10 @@ const Call = ({ onBack, agentId }) => {
           console.log("Twilio.Device is ready", mounted);
           if (mounted) {
             setDevice(twilioDevice);
+            if (isFirstDeviceReady) {
+              initiateCall(agentId, twilioDevice);
+              setIsFirstDeviceReady(false);
+            }
           }
         });
 
@@ -154,92 +159,6 @@ const Call = ({ onBack, agentId }) => {
     };
   }, [isTwilioLoaded, device, endCall, onBack, toast]);
 
-  // Handle call initiation
-  async function handleCall() {
-    if (!device || !device.status === "ready") {
-      toast({
-        title: "Error",
-        description: "Please wait for Twilio to initialize",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      const response = await fetch(`${backendAPIUrl}/stream/prepare`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({
-          aiConfig: JSON.stringify({
-            agentId,
-            playground: false,
-          }),
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-          errorData.message || `Server error: ${response.status}`
-        );
-      }
-
-      const prepareData = await response.json();
-
-      if (!prepareData || !prepareData.conversationId) {
-        throw new Error("Invalid response from prepare endpoint");
-      }
-
-      const callParams = {
-        To: "client",
-        aiConfig: JSON.stringify({
-          agentId,
-          conversationId: prepareData.conversationId,
-          playground: false,
-        }),
-      };
-
-      await initiateCall(agentId);
-
-      try {
-        const connection = await device.connect(callParams);
-
-        if (!connection) {
-          throw new Error("Failed to establish connection");
-        }
-
-        connection.on("error", (error) => {
-          console.error("Call connection error:", error);
-          toast({
-            title: "Call Error",
-            description: error.message || "Connection error occurred",
-            variant: "destructive",
-          });
-          handleEndCall();
-        });
-
-        connection.on("disconnect", () => {
-          console.log("Call disconnected");
-          handleEndCall();
-        });
-      } catch (twilioError) {
-        console.error("Twilio connection error:", twilioError);
-        throw new Error("Failed to establish call connection");
-      }
-    } catch (error) {
-      console.error("Error starting call:", error);
-      toast({
-        title: "Call Error",
-        description: error.message || "Failed to start call",
-        variant: "destructive",
-      });
-      endCall();
-    }
-  }
-
   // Use endCall from context
   function handleEndCall() {
     try {
@@ -263,7 +182,7 @@ const Call = ({ onBack, agentId }) => {
     </li>
   );
 
-  console.log(callState, "call state");
+  console.log(agentId, "agent state");
   const renderActiveCall = () => (
     <>
       <div className="bg-black pt-[30px] px-8 pb-[22px] h-full max-h-[134px] rounded-t-[18px] flex flex-col justify-between gap-3">
@@ -273,6 +192,10 @@ const Call = ({ onBack, agentId }) => {
               ? "Ringing..."
               : callState === "connected"
               ? "In Call"
+              : callState === "idle"
+              ? isFirstDeviceReady
+                ? "Preparing..."
+                : "Ready to Call"
               : "Ready to Call"}
           </h2>
           {callState !== "idle" && (
@@ -307,7 +230,7 @@ const Call = ({ onBack, agentId }) => {
           >
             <Captions className="h-8 w-8" />
             <p className="w-full text-left font-inter font-semibold leading-[22.4px]">
-              Show Transcript
+              {showTranscript ? "Hide Transcript" : "Show Transcript"}
             </p>
             {showTranscript ? (
               <ChevronUp className="h-8 w-8" />

@@ -444,7 +444,9 @@ const hash = crypto.createHmac('sha256', secret).update(userId).digest('hex');`,
     }
   };
 
-  const initiateCall = async (agentId) => {
+  const initiateCall = async (agentId, directDevice = null) => {
+    const deviceToUse = directDevice || state.device; // Use passed device or context device
+
     dispatch({ type: "SET_CALL_STATE", payload: "ringing" });
     try {
       // 1. Get WebSocket token
@@ -486,11 +488,10 @@ const hash = crypto.createHmac('sha256', secret).update(userId).digest('hex');`,
       // 3. Initialize WebSocket
       await setupWebSocket(wsToken, agentId);
 
-      console.log(state.device, "devic status");
       // 4. Start the call using Twilio device with audio constraints
-      if (!state.device) throw new Error("Twilio device not ready");
+      if (!deviceToUse) throw new Error("Twilio device not ready");
 
-      const connection = state.device.connect({
+      const connection = deviceToUse.connect({
         To: "client",
         aiConfig: JSON.stringify(updatedAiConfig),
         // Add audio constraints to prevent echo
