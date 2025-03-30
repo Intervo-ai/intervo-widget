@@ -1,5 +1,5 @@
 "use client";
-import React, { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import DefaultIcon from "@/assets/widgetDefault.png";
 import ActiveIcon from "@/assets/widgetActive.png";
@@ -21,31 +21,58 @@ const Page = () => {
     const viewportHeight = window.innerHeight;
     const isMobile = window.innerWidth < 768;
     const buttonSize = 62; // 50px icon + margin
+    const topMargin = isMobile ? 40 : 50; // Increased top margin to ensure clear visibility
+    const bottomSpace = 96; // 6rem (increased from 84px)
 
-    // Check if height is constrained enough to hide "Powered by" text
-    const isHeightConstrained = viewportHeight < 560;
+    // Calculate available height after accounting for margins
+    const availableHeight =
+      viewportHeight - topMargin - (isMobile ? buttonSize : bottomSpace);
+
+    // Hide "Powered by Intervo" text if available height is limited
+    // More aggressive condition to ensure it hides when space is tight
+    const isHeightConstrained = availableHeight < 600; // Increased from 560 to catch more constrained cases
     setShouldHidePoweredBy(isHeightConstrained);
 
     if (isMobile) {
-      // On mobile, use full height with a small margin at the top
-      const topMargin = 20; // 20px margin from the top
+      // On mobile, ensure there's sufficient margin at top and bottom
       const newHeight = viewportHeight - topMargin - buttonSize;
       setWidgetHeight(`${newHeight}px`);
-      setWidgetPosition({ top: `${topMargin}px`, bottom: "auto" });
+      setWidgetPosition({
+        top: `${topMargin}px`,
+        bottom: "auto",
+        maxHeight: `${newHeight}px`, // Ensure content doesn't exceed this height
+      });
     } else {
-      // On desktop, use default height unless viewport is too small
+      // On desktop, maintain default height unless viewport is too small
       const defaultHeight = 643;
-      const minMarginTop = 30; // Minimum margin from the top
 
-      if (viewportHeight < defaultHeight + minMarginTop + 24) {
-        // 24px for bottom margin
-        const newHeight = viewportHeight - minMarginTop - 24;
+      if (viewportHeight < defaultHeight + topMargin + bottomSpace) {
+        // Increased bottom margin
+        const newHeight = viewportHeight - topMargin - bottomSpace;
         setWidgetHeight(`${newHeight}px`);
+        // Position from top with sufficient margin
+        setWidgetPosition({
+          top: `${topMargin}px`,
+          bottom: "auto",
+          maxHeight: `${newHeight}px`, // Ensure content doesn't exceed this height
+        });
       } else {
         setWidgetHeight("643px"); // Default height for desktop
+        // Default positioning from bottom
+        setWidgetPosition({
+          top: "auto",
+          bottom: `${bottomSpace}px`, // Increased space for button (6rem)
+        });
       }
-      setWidgetPosition({}); // Reset position for desktop (will use default bottom-24)
     }
+
+    // Log the state for debugging
+    console.log(
+      "Height constrained:",
+      isHeightConstrained,
+      "Available height:",
+      availableHeight
+    );
   }, []);
 
   // Update dimensions on mount and when window resizes
@@ -66,7 +93,12 @@ const Page = () => {
   }, []);
 
   const renderComponent = useCallback(() => {
-    console.log("rerendering renderComponent", activeComponent);
+    console.log(
+      "rerendering renderComponent",
+      activeComponent,
+      "hidePoweredBy:",
+      shouldHidePoweredBy
+    );
     if (activeComponent !== "main" && !contact.collected) {
       return (
         <DataCollection
@@ -93,29 +125,24 @@ const Page = () => {
     }
   }, [activeComponent, setActiveComponent, contact, shouldHidePoweredBy]);
 
-  const widgetStyle = {
-    height: widgetHeight,
-    ...widgetPosition,
-  };
-
-  // Make sure the button isn't covered by the widget
-  // The widget should be positioned to leave space for the button
   return (
     <div className="relative">
       {isOpen && (
         <div
-          className="fixed w-full md:w-[432px] bg-slate-100 border border-slate-300 rounded-none md:rounded-[18px] shadow-2xl flex flex-col z-40"
+          className="fixed w-full md:w-[432px] bg-slate-100 border border-slate-300 rounded-none md:rounded-[18px] shadow-2xl flex flex-col z-40 overflow-hidden"
           style={{
-            ...widgetStyle,
-            right: window.innerWidth < 768 ? "0" : "8px",
-            bottom: window.innerWidth < 768 ? "70px" : "84px", // Leave space for the button
+            height: widgetHeight,
+            right: window.innerWidth < 768 ? "0" : "32px", // Increased to 2rem (32px)
+            ...widgetPosition,
           }}
         >
-          {renderComponent()}
+          <div className="flex flex-col h-full overflow-auto">
+            {renderComponent()}
+          </div>
         </div>
       )}
 
-      {/* Toggle Button - now has higher z-index to always be clickable */}
+      {/* Toggle Button - higher z-index to always be clickable */}
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="fixed bottom-6 right-6 z-50 rounded-full shadow-lg transition-all bg-transparent border-none p-0 focus:outline-none focus:ring-0"
