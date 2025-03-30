@@ -1,6 +1,7 @@
 import { Mail, MessageCircle, Phone } from "lucide-react";
+import PropTypes from "prop-types";
 
-const Main = ({ onCardClick }) => {
+const Main = ({ onCardClick, hidePoweredBy = false }) => {
   return (
     <>
       <div className="pt-[30px] px-8 pb-[22px] h-full max-h-[110px] rounded-t-[18px] flex flex-col leading-8 text-2xl font-semibold -tracking-[0.75px]">
@@ -55,12 +56,19 @@ const Main = ({ onCardClick }) => {
             </div>
           </div>
         </div>
-        <div className="text-neutral-500 font-inter text-sm leading-4 text-center">
-          Powered by intervo
-        </div>
+        {!hidePoweredBy && (
+          <div className="text-neutral-500 font-inter text-sm leading-4 text-center">
+            Powered by intervo
+          </div>
+        )}
       </div>
     </>
   );
+};
+
+Main.propTypes = {
+  onCardClick: PropTypes.func.isRequired,
+  hidePoweredBy: PropTypes.bool,
 };
 
 export default Main;
